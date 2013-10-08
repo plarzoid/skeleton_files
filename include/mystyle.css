@@ -1,0 +1,101 @@
+.warning{color: #AA0000;}
+
+body {background-color: #000000;
+background-image: url(images/PP_SmallWaterMark.png)}
+h1 {color: #ffffff}
+
+.title-plaque h2{
+	letter-spacing:0.04em;
+	font-size:1.8em;
+	font-weight:bold;
+	line-height:1.6em;
+}
+
+td {color: #ffffff}
+th {color: #ffffff}
+
+.content-wrapper{width:628px;margin:30px 0 0 10px;padding:1px 0 0 0;}
+.content-header{position:relative;background:url(images/inner-header.png) no-repeat top center;height:34px;margin:-22px 0 0;}
+.content-header .title-plaque{height:144px;position:absolute;width:467px;background:url(images/PP-title-plaque.png) no-repeat 0 0;top:-5px;left:31px;margin:0;padding:13px 87px 0 42px;z-index:10;}
+.content-body{background:url(images/inner-background.png) repeat-y;padding:30px 63px 1px 45px;width:520px;float:left;}
+.content-body .node-body{padding-top: 10px; padding-bottom: 20px;}
+.content-footer{background:url(images/inner-footer.png) no-repeat 0 0;height:47px;clear:both;}
+
+.spinner{
+background:url(images/privateer-logo.png) no-repeat 0 0; 
+width:167px; 
+height:218px;
+border:0px;
+}
+
+a:link {color:#FF0000;}      /* unvisited link */
+a:visited {color:#00FF00;}  /* visited link */
+a:hover {color:#FF00FF;}  /* mouse over link */
+a:active {color:#0000FF;}  /* selected link */
+
+td.left{text-align:left;
+width:50%;}
+
+td.right{text-align:right;
+width:50%;
+}
+
+td.current_tab{
+border-width: 3px 3px 0px 3px; 
+border-style: solid; 
+border-color: #ffffff;
+background-color: #000000;
+text-align: center;
+width: 15%;
+}
+
+td.tab{
+border-width: 1px 1px 3px 1px;
+border-style: solid;
+border-color: #aaaaaa;
+background-color: #000000;
+text-align: center;
+width: 15%;
+}
+
+td.tab_filler{
+border-width: 0px 0px 3px 0px;
+border-style: solid;
+border-color: #aaaaaa;
+text-align: center;
+}
+
+td.current_page{
+border-width: 0px 3px 3px 3px;
+border-style: solid;
+border-color: #ffffff;
+background-color: #000000;
+text-align: center;
+}
+
+table.basic_table{
+border-width: 2px 2px 0px 2px;
+border-style: solid;
+background-color: #000000;
+border-color: #ffffff
+border-spacing: 0px;
+text-align: center;
+}
+
+table.basic_bottom_table{
+border-width: 2px 2px 2px 2px;
+border-style: solid;
+background-color: #000000;
+border-color: #ffffff
+border-spacing: 0px;
+text-align: center;
+}
+
+td.separator{
+border-width: 0px 0px 2px 0px;
+border-style: solid;
+background-color: #000000;
+border-color: #ffffff;
+text-align: center;
+width: 50%;
+}
