@@ -9,6 +9,14 @@ error_reporting(E_ERROR & ~E_NOTICE);
 Test Zone
 
 *************************************************/
+$pattern = "";
+$string = "CREATE  TABLE IF NOT EXISTS `asterdial`.`project_channels` (";
+
+echo preg_match($pattern, $string, $matches);
+echo "\n";
+
+echo $matches[1]."\n";
+//return;
 
 /*************************************************
 //END Test Zone
@@ -88,20 +96,15 @@ $line = " ";
 
 while($line){
 
+//Read in a line
 $line = fgets($sql_fptr);
-
-/***********************************************
-0. Some lines we know we're going to ignore
-
-
-
 
 /************************************************
 1. Detect and capture the name of the table
 */
-$create_table_pattern = "~`[a-z]+`\.`([a-z]+)`~";
+$create_table_pattern = "~`[a-z]+`\.`([a-z_]+)`~";
 
-if(preg_match($create_table_pattern, $line, $matches)){
+if(preg_match("~CREATE~", $line) && preg_match($create_table_pattern, $line, $matches)){
 
     $table_name = end($matches);
     $table_Fn_name = ucfirst(strToLower($table_name));
@@ -109,7 +112,7 @@ if(preg_match($create_table_pattern, $line, $matches)){
     echo "\n======================================================================\n";
     echo "\n";
     echo "Found Table: $table_name\n";
-    echo "Table Function name: $table_Fn_name\n";
+    echo "Table Function name: $table_Fn_name\n\n";
 
     //create the empty columns array
     $columns = array();
@@ -129,7 +132,7 @@ if(preg_match($create_table_pattern, $line, $matches)){
 */
 $column_pattern = "~`([a-zA-Z_]+)`\s+([A-Z]+)~";
 
-if($table_opened && preg_match($column_pattern, $line, $matches)){
+if($table_opened && !preg_match("~INDEX~", $line) && preg_match($column_pattern, $line, $matches)){
 
     $name = $matches[1];
     
@@ -179,8 +182,7 @@ $primary_key_pattern = "~PRIMARY\sKEY\s\(`([a-zA-Z_]+)`\)~";
 
 if($table_opened && preg_match($primary_key_pattern, $line, $matches)){
 
-
-    $keys["primary"] = strToUpper(end($matches));
+    $keys["primary"] = strToLower(end($matches));
 
     foreach($columns as $key=>$column_array){
         if(!strcmp($columns[$key]["name"], $keys["primary"])){
@@ -190,7 +192,7 @@ if($table_opened && preg_match($primary_key_pattern, $line, $matches)){
                 "name"=>$columns[$key][name], 
                 "varname"=>$columns[$key][varname]);
             
-            echo "Found Primary Key: ".$keys["primary"]."\n";
+            echo "\nFound Primary Key: ".$keys["primary"]."\n";
             break;
         }
     }
@@ -240,12 +242,11 @@ $class_header= '<?php
 *    '.$table_Fn_name.' Class
 *
 ***************************************************/
-
 require_once("query.php");
 
 class '.$table_Fn_name.' {
 
-var $query=NULL;
+var $db=NULL;
 var $table="'.$table_name.'";
 
 
@@ -254,9 +255,8 @@ var $table="'.$table_name.'";
 Constructor & Destructor
 
 ***************************************************/
-
 public function __construct(){
-    $this->query = new Query();
+    $this->db = new Query();
 }
 
 public function __destruct(){}
@@ -290,40 +290,45 @@ $createFn.="){\n";
 
 $createFn.="\n\t//Validate the inputs\n";
 foreach($columns as $c){
-     if(!$c[primary_key] && (strlen($c[validateFn]) > 0)){$createFn.="\t".$c[validateFn]."\n";}
+    if(!$c[primary_key] && (strlen($c[validateFn]) > 0)){
+         $createFn.="\t".$c[validateFn]."\n";
+    }
 }
 $createFn.="\n";
 
 
 $createFn.="\t//Create the values Array\n";
-$createFn.="\t\$value = array(\n";
-foreach($columns as $c){
-     if(!$c[primary_key]){$createFn.="\t\t\":".$c[name]."\"=>".$c[varname];}
-     if($k != end(array_keys($columns))){$createFn.=",\n ";}
+$createFn.="\t\$values = array(\n";
+foreach($columns as $k=>$c){
+    if($c[primary_key]){continue;}
+
+    $createFn.="\t\t\":".$c[name]."\"=>".$c[varname];
+    if($k != end(array_keys($columns))){$createFn.=",\n ";}
 }
-$createFn.="\t);\n\n";
+$createFn.="\n\t);\n\n";
 
 
 $createFn.="\t//Build the query\n";
 $createFn.="\t\$sql = \"INSERT INTO \$this->table (\n";
 foreach($columns as $k=>$c){
-    if(!$c[primary_key]){
-        $createFn.="\t\t\t\t".$c[name];
-        if($k != end(array_keys($columns))){$createFn.=",\n";}
-    }
+    if($c[primary_key]){continue;}
+
+    $createFn.="\t\t\t\t".$c[name];
+    if($k != end(array_keys($columns))){$createFn.=",\n";}
 }
 $createFn.="\n";
-$createFn.="\t\t\t\) VALUES (\n";
+$createFn.="\t\t\t) VALUES (\n";
 foreach($columns as $k=>$c){
-    if(!$c[primary_key]){
-	$createFn.="\t\t\t\t:".$c[name];
-        if($k != end(array_keys($columns))){$createFn.=", ";}
-    }
+    if($c[primary_key]){continue;}
+
+     $createFn.="\t\t\t\t:".$c[name];
+     if($k != end(array_keys($columns))){$createFn.=",\n";}
+    
 }
 $createFn.=')";';
 $createFn.="\n\n";
 
-$createFn.="\treturn \$this->query->insert(\$sql, \$values);";
+$createFn.="\treturn \$this->db->insert(\$sql, \$values);";
 $createFn.="\n}\n\n";
 
 echo "Writing create function...\n";
@@ -340,10 +345,17 @@ Delete Function
 
 **************************************************/
 ';
-$deleteFn.= "public function delete".$table_Fn_name."(".$primary_key[varname]."){\n";
-$deleteFn.= "\tif(!is_int(".$primary_key[varname].")){return false;}\n\n";
-$deleteFn.= "\t\$sql = \"DELETE FROM \$this->table WHERE ".$primary_key[name]."=".$primary_key[varname]."\";\n\n";
-$deleteFn.= "\treturn \$this->query->update(\$sql);\n";
+$deleteFn.= "public function delete".$table_Fn_name."(".$primary_key[varname]."){\n\n";
+
+$deleteFn.= "\t//Validate the input\n";
+$deleteFn.= "\tif(Check::isInt(".$primary_key[varname].")){return false;}\n\n";
+
+$deleteFn.= "\t//Create the values array\n";
+$deleteFn.= "\t\$values = array(\":".$primary_key[name]."\"=>".$primary_key[varname].");\n\n";
+
+$deleteFn.= "\t//Create Query\n";
+$deleteFn.= "\t\$sql = \"DELETE FROM \$this->table WHERE ".$primary_key[name]."=:".$primary_key[name]."\";\n\n";
+$deleteFn.= "\treturn \$this->db->delete(\$sql, \$values);\n";
 $deleteFn.= "}\n\n";
 
 echo "Writing delete function...\n";
@@ -361,22 +373,39 @@ Query By Column Function(s)
 ';
 fputs($class_fptr, $columnFnHeader);
 
-foreach($columns as $column){
-    $columnFn="";
-    $columnFn.= "public function get".$table_Fn_name."By".$column[function_name]."($column[varname]){\n";
-    if(strlen($column[validateFn])){$columnFn.= "\t".$column[validateFn]."\n\n";}
-    $columnFn.= "\t\$sql = \"SELECT * FROM \$this->table WHERE ".$column[name]."=";
-    
-    if(preg_match("~varchar~", strToLower($column[type]))){
-        $columnFn.= "'".$column[varname]."'\";\n\n";
-    } else {
-        $columnFn.= $column[varname]."\";\n\n";
-    }
-    $columnFn.= "\treturn \$this->query->query(\$sql);\n";
-    $columnFn.= "}\n\n";
+$masterColumnFn='private function get'.$table_Fn_name.'ByColumn($column, $value){
 
-    echo "Writing query by column function for ".$column[name]."...\n";
-    fputs($class_fptr, $columnFn);
+	//inputs are pre-verified by the mapping functions below, so we can trust them
+
+	//Values Array
+	$values = array(":$column"=>$value);
+
+	//Generate the query
+	$sql = "SELECT * FROM $this->table WHERE $column=:$column";
+    
+	return $this->db->query($sql, $values);
+}';
+$masterColumnFn.="\n\n";
+
+echo "Writing master column function...\n";
+fputs($class_fptr, $masterColumnFn);
+
+foreach($columns as $column){
+
+$columnFn = '
+public function get'.$table_Fn_name.'By'.ucfirst(strtolower($column[name])).'('.$column[varname].'){
+	
+	//Validate Inputs
+	'.$column[validateFn].'
+
+	return get'.$table_Fn_name.'ByColumn("'.$column[name].'", '.$column[varname].'.);
+}';
+$columnFn.="\n\n";
+
+echo "Writing column function for $column[name]...\n";
+fputs($class_fptr, $columnFn);
+
+
 }
 
 /**************************
