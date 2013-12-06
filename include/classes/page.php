@@ -16,16 +16,16 @@ class Page {
         Session::init();
 
         //set the webroot
-                $this->servername = $_SERVER[HTTP_HOST];
+        $this->servername = $_SERVER[HTTP_HOST];
 
-                if (preg_match("/\/~(\w+)\//", $_SERVER[PHP_SELF], $matches)) {
-                        $this->root = "/~" . $matches[1] . "/";
-                } else {
-                        //$this->root = "/";
-                }
+        if (preg_match("/\/~(\w+)\//", $_SERVER[PHP_SELF], $matches)) {
+            $this->root = "/~" . $matches[1] . "/";
+        } else {
+            //$this->root = "/";
+        }
 
         //set the vars array to empty
-                $vars = array();
+        $vars = array();
 
         //set internal authority level
         switch((string)$authentication_level) {
@@ -138,18 +138,11 @@ class Page {
             case "radio":    
                 if(!Check::arrayKeysFormat(array("get_choices_array_func"), $attributes)) return false;
                 break;
-            case "date_month_year":
-                if(!Check::arrayKeysFormat(array("start_year", "get_choices_array_func"), $attributes)) return false;
-                break;
             case "textbox":
             case "textarea":
             case "hidden":
-            case "hiddenarray":
             case "password":
             case "select":
-                break;
-            case "counter":
-                if(!Check::arrayKeysFormat(array("init"), $attributes)) return false;
                 break;
 
             //New HTML5 input types
@@ -184,10 +177,10 @@ class Page {
             $_REQUEST[$varname] = $_POST[$varname];
         }
 
-                //if variable wasn't returned, at all, set to default
-                if(empty($_REQUEST[$varname]) && !is_numeric($_REQUEST[$varname])){
-                    $_REQUEST[$varname] = $_POST[$varname] = $attributes[default_val];
-                }
+        //if variable wasn't returned, at all, set to default
+        if(empty($_REQUEST[$varname]) && !is_numeric($_REQUEST[$varname])){
+            $_REQUEST[$varname] = $_POST[$varname] = $attributes[default_val];
+        }
 
         if($type == "select" || $type == "radio") { //check_func is always validSelect
             $attributes[check_func] = "validSelect";
@@ -195,7 +188,7 @@ class Page {
         }
         
         //$attributes[type] = $type;
-        if ($type != "checkbox_array" && $type != "date_month_year" && $type != "file") {
+        if ($type != "checkbox_array" && $type != "file") {
             if((array_key_exists("use_post", $attributes) && $attributes[use_post])
                         || (array_key_exists("usepost", $attributes) && $attributes[usepost])) {
                 $_POST[$varname] = trim($_POST[$varname]);
@@ -204,31 +197,11 @@ class Page {
             }
         }
 
-        if($type != "date_month_year") {
-            global $$varname;
-            $$varname = $_REQUEST[$varname]; //put form var into global scope
-        } else {
-            $vm = $varname . "_month";
-            $vy = $varname . "_year";
-            global $$vm;
-            global $$vy;
-            if ($attributes[usepost] || $attributes[use_post]) {
-                $$vm = $_POST[$vm];
-                $$vy = $_POST[$vy];
-            } else {
-                $$vm = $_REQUEST[$vm];
-                $$vy = $_REQUEST[$vy];
-            }
-        }    
+        //put form var into global scope
+        global $$varname;
+        $$varname = $_REQUEST[$varname];
 
-        if($type=="counter"){
-            $attributes[value]=$_REQUEST[$varname];
-            if(!$attributes[value]){
-                $attributes[value]=$attributes[init];
-            }
-        }
-        
-
+        //Store type into the attributes array for use later
         if(empty($attributes)){
             $attributes = array("type"=>$type);
         } else {
@@ -237,6 +210,7 @@ class Page {
             }
         }
 
+        //Add the form var to the stored list of form vars
         $this->vars[$varname] = $attributes;
 
         return true;
@@ -261,9 +235,6 @@ class Page {
         $this->disp_mode = $mode;
     }
 
-    function showVars(){
-        print_r($this->vars);
-    }
         
     //set disp_type to either "form" or "success"
     function displayVar($varname, $disp_type = false, $args = array()) {
@@ -275,31 +246,15 @@ class Page {
             }
         }
 
-        //extract the type from teh attributes array
+        //extract the type from the attributes array
         $type = $this->vars[$varname]["type"];
         unset($this->vars[$varname]["type"]);
 
         switch ($type) {
             
-            case "checkbox":
-            case "textbox": 
-                //$this->printTextbox($varname, $this->vars[$varname], $disp_type);
-                $this->printGenericInput($varname, $type, $this->vars[$varname], $disp_type);
-                break;
-            case "textarea": 
-                $this->printTextarea($varname, $this->vars[$varname], $disp_type);
-                break;
+            //Special cases
             case "hidden": 
                 $this->printHidden($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "hiddenarray": 
-                $this->printHiddenArray($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "file": 
-                $this->printFile($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "password": 
-                $this->printPassword($varname, $this->vars[$varname], $disp_type);
                 break;
             case "submit": 
                 $this->printSubmit($varname, $this->vars[$varname], $disp_type);
@@ -307,66 +262,17 @@ class Page {
             case "select": 
                 $this->printSelect($varname, $this->vars[$varname], $disp_type);
                 break;
-            /*case "checkbox": 
-                //$this->printCheckbox($varname, $this->vars[$varname], $disp_type);
-                echo "here";
-                $this->printGenericInput($varname, $type, $this->vars[$varname], $disp_type);
-                break;*/
             case "checkbox_array": 
-                $this->printCheckbxArray($varname, $this->vars[$varname], $disp_type);
+                $this->printCheckboxArray($varname, $this->vars[$varname], $disp_type);
                 break;
             case "radio": 
                 $this->printRadio($varname, $this->vars[$varname], $disp_type);
                 break;
-            case "date_month_year": 
-                $this->printDateMonthYear($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "counter": 
-                $this->printCounter($varname, $this->vars[$varname], $disp_type);
-                break;
-                        
-            // New HTML5 input types
 
-            case "date":
-                $this->printDate($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "time":
-                $this->printTime($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "week":
-                $this->printWeek($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "month":
-                $this->printMonth($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "datetime":
-                $this->printDatetime($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "color":
-                $this->printColor($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "email":
-                $this->printEmail($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "search":
-                $this->printSearch($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "url":
-                $this->printUrl($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "tel":
-                $this->printTel($varname, $this->vars[$varname], $disp_type);
-                break;
-            case "number":
-                /*$this->printNumber($varname, $this->vars[$varname], $disp_type);
-                break;*/
-            case "range":
-                //$this->printRange($varname, $this->vars[$varname], $disp_type);
+            //Everything else
+            default: 
                 $this->printGenericInput($varname, $type, $this->vars[$varname], $disp_type);
                 break;
-
-            default: 
-                return;
         }
     }
 
@@ -400,36 +306,6 @@ class Page {
             foreach ($choices as $c) {
                 if($_REQUEST[$v][$c[value]] != "Y") {
                     $_REQUEST[$v][$c[value]] = "N";
-                }
-            }
-        } elseif ($attr[type] == "date_month_year") {
-            if(array_key_exists("check_func", $attr) && $attr[check_func] != "none") {
-                $func = $attr[check_func];
-                $vmonth = $v . "_month";
-                $vyear = $v . "_year";
-                global $$vmonth;
-                global $$vyear;
-            
-                $_REQUEST[$vmonth] = $$vmonth;
-                $_REQUEST[$vyear] = $$vyear;
-                $ret = false;
-                $a = $attr[check_func_args];
-
-                if(!is_array($a)) {
-                    $ret = $check->$func($$vmonth, $$vyear);
-                } else {
-                    switch(count($a)) {
-                        case 0: $ret = $check->$func($$vmonth, $$vyear); break;
-                        case 1: $ret = $check->$func($$vmonth, $$vyear, $a[0]); break;
-                        case 2: $ret = $check->$func($$vmonth, $$vyear, $a[0], $a[1]); break;
-                        case 3: $ret = $check->$func($$vmonth, $$vyear, $a[0], $a[1], $a[2]); break;
-                        default: $ret = $check->$func($$vmonth, $$vyear);
-                                    }
-                }
-                
-                if($ret) {
-                    array_push($this->emessages, $attr[error_message] . $ret);
-                    array_push($this->elocators, $v);
                 }
             }
         } elseif($attr[type] == "file") {
@@ -509,29 +385,21 @@ class Page {
     function setVars(&$obj, $obj_type = false) {
         foreach($this->vars as $v => $attr) {
             if(array_key_exists("setget", $attr)) {
-                if(    (    ($obj_type == false && !array_key_exists("obj_type", $attr))
+                if((($obj_type == false && !array_key_exists("obj_type", $attr))
                     ||    ($obj_type != false && $attr[obj_type] == $obj_type))
                     && $attr[setget] != "none"
                       ) {
-                    if($attr[type] != "date_month_year" && $attr[type] != "file") {
+                    if($attr[type] != "file") {
                         $func = "set" . $attr[setget];
                         global $$v;
                         $obj->$func($$v);
-                    } elseif($attr[type] == "file") {
+                    } else {
                         $func = "set" . $attr[setget];
                         $farr_name = $v . "_file_array";
                         global $$v;
                         global $$farr_name;
                         $file_array = $$farr_name;
                         $obj->$func($$v);
-                    } else {
-                        $func = "set" . $attr[setget];
-                        $vm = $v . "_month";
-                        $vy = $v . "_year";
-                        global $$vm;
-                        global $$vy;
-                        $obj->$func($$vm, "month");
-                        $obj->$func($$vy, "year");
                     }
                 }
             }
@@ -620,23 +488,7 @@ class Page {
                     case 4: $$cname = $ch->$cfunc($a[0], $a[1], $a[2], $a[3]); break;
                     default: $$cname = $ch->$cfunc();
                 }
-
-            } elseif($attr["type"] == "date_month_year"){
-                $cmname = $v . "_month_choices";
-                $cyname = $v . "_year_choices";
-
-                $cfunc = $attr["get_choices_array_func"];
-                                $ch = new Choices();
-                                global $$cmname;
-                global $$cyname;
-                $a = $attr["get_choices_array_func_args"];
-                
-                if(!is_array($a)) $a = array();
-                    switch(count($a)) {
-                        default: $$cmname = $ch->$cfunc("month", $attr["start_year"]); 
-                                 $$cmname = $ch->$cfunc("year", $attr["start_year"]);break;
-                    }    
-            }//if / elseif
+            }//if
         }//foreach
     }//function
 
@@ -666,22 +518,11 @@ class Page {
 
         //else, generate the input form:
 
-        //Start with the input container
-        $str = '<div class="input_container">';
-
-
         //Use or make up a label for the input
         if($attrs[label]){
             $label = $attrs[label];
         } else {
-            $label = "";
-            $name_parts = preg_split("~_~", $v);
-            foreach($name_parts as $part){
-                $label .= ucfirst(strtolower($part));
-                if(strcmp($part, end($name_parts))){
-                    $label.= " ";
-                }
-            }
+            $label = $this->generateLabel($v);
         }
 
         //detect units
@@ -693,17 +534,24 @@ class Page {
         //Add the label
         $str.= '<div class="label"><label for="'.$v.'">'.$label.':</label></div>';
 
-
         //generate the input header
-        $str.= '<div class="input"><input type="'.$type.'" name="'.$v.'" ';
+        $str.= '<input type="'.$type.'" name="'.$v.'" ';
        
         //Add the attributes
         foreach($attrs as $attr=>$value){
             switch($attr){
+
+                //Skip these
                 case "default_val":
                 case "label":
                 case "units":
+                case "check_func":
+                case "check_func_args";
+                case "get_choices_array_func":
+                case "get_choices_array_func_args":
                     break;
+
+                //Boolean attributes
                 case "disabled":
                 case "required":
                 case "multiple":
@@ -712,6 +560,8 @@ class Page {
                 case "formnovalidate":
                     $str.= "$attr ";
                     break;
+
+                //Everything else
                 default:
                     $str.= "$attr=\"$value\" ";
                     break;
@@ -719,135 +569,65 @@ class Page {
         }
 
         //Close the input
-        $str.="> $units</div>";
-
-        //Close the container
-        $str.= "</div>";
+        $str.="> $units";
 
         //Finally, echo the HTML
+        $this->printComplexInput($v, $label, $str);
+    }
+
+    function printComplexInput($name, $label, $input){
+        $str = "<div class=\"input\">";
+        $str.=     "<div class=\"input_label\"><label for=\"$v\">$label</label></div>";
+        $str.=     "<div class=\"input_form\">$input</div>";
+        $str.= "</div>";
+
         echo $str;
     }
 
+    function generateLabel($v){
+        $label = "";
+        $name_parts = preg_split("~_~", $v);
+        foreach($name_parts as $part){
+            $label .= ucfirst(strtolower($part));
+            if(strcmp($part, end($name_parts))){
+                $label.= " ";
+            }
+        }
+        return $label;
+    }
 
-    function printTextbox($v, $attr, $disp_type = "form") {
+    function printSimpleInput($input){
+        echo "<div class=\"input\"><div class=\"simple_input\">$input</div></div>";
+    }
+
+    function printHidden($v, $attr, $disp_type = "form") {
         global $$v;
         $_REQUEST[$v] = $$v;
         $lvar = stripslashes($$v);
-        if(empty($lvar) && !is_numeric($lvar)){$lvar=$attr[default_val];}
-        if(Check::notInt($attr[box_size])){
-            $attr[box_size] = 82;
-        }
-
-        $disabled="";        
-        
-        if($attr[disabled]){
-            $disabled="disabled";
-        }
-
-        if($disp_type == "form"){
-            ?><input type=text size=<?=$attr[box_size]?> maxlength=255 name="<?=$v?>" value="<?=htmlspecialchars($lvar)?>" <?=$disabled?>><?
-        } else {
-            echo $lvar;
-        }
-    }
-
-        function printPassword($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                $lvar = stripslashes($$v);
-        if(empty($lvar)){$lvar=$attr[default_val];}
-                if(Check::notInt($attr[box_size])){
-                        $attr[box_size] = 82;
-                }
-                if($disp_type == "form"){
-                        ?><input type=password size=<?=$attr[box_size]?> maxlength=255 name="<?=$v?>" value=""><?
-                } else {
-                        echo $lvar;
-                }
-        }
-
-        function printFile($v, $attr, $disp_type = "form") {
-        $farr_name = $v . "_file_array";
-                global $$v;
-        global $$farr_name;
-        $file_array = $$farr_name;
-
-        if(!is_array($file_array)) $file_array = array();
-
-                if($disp_type == "form"){
-                        if(array_key_exists("origname", $file_array)) {
-                ?><input type=file name="<?=$v?>" value="<?=$file_array[origname]?>"><?
-                    } else {
-                            ?><input type=file name="<?=$v?>" value="<?=$file_array[name]?>"><?
-            }
-        } else {
-            ?><a href="<?=($attr[filedir_webpath] . "/" . $file_array[name])?>"><?=$file_array[name]?></a><?
-                }
-        }
-
-        function printTextarea($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                $lvar = stripslashes($$v);
-                if(empty($lvar)){$lvar=$attr[default_val];}
-        if($disp_type == "form"){
-                    if(array_key_exists("rows", $attr)){
-                $attr[rows] = 7;
-            }
-            if(array_key_exists("cols", $attr)){
-                $attr[cols] = 80;
-            }
-                ?><textarea rows="<?=$attr[rows]?>" cols="<?=$attr[cols]?>" wrap=hard name="<?=$v?>"><?=$lvar?></textarea><?
-                } else {
-                        echo $lvar;
-                }
-        }
-
-        function printHidden($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                $lvar = stripslashes($$v);
 
         if(empty($lvar)){$lvar=$attr[value];}
 
-                if($disp_type == "form"){
-                        ?><input type=hidden name="<?=$v?>" value="<?=htmlspecialchars($lvar)?>"><?
-                } else {
-                        //echo $lvar;
-                }
+        if($disp_type == "form"){
+            $str = "<input type=\"hidden\" name=\"$v\" value=\"".htmlspecialchars($lvar)."\">";
+            $this->printSimpleInput($str);
+        } else {
+            //echo $lvar;
         }
+    }
 
-        function printHiddenArray($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = implode(',',$$v);
-                $lvar = stripslashes(implode(',',$$v));
-
-                if(empty($lvar)){$lvar=$attr[value];}
-
-                if($disp_type == "form"){
-            
-                        ?><input type=hidden name="<?=$v?>" value="<?=htmlspecialchars($lvar)?>"><?
-                } else {
-                        //echo $lvar;
-                }
+    function printSubmit($v, $attr, $disp_type = "form") {
+        global $$v;
+        $_REQUEST[$v] = $$v;
+        if($disp_type == "form") {
+            $str.= "<input type=\"submit\" name=\"$v\" value=\"".$attr[value]."\">";
+            $this->printSimpleInput($str);
         }
+    }
 
-        function printSubmit($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                if($disp_type == "form") {
-                    $str = "<div class=\"input_container\"><div class=\"submit\">";
-                    $str.= "<input type=\"submit\" name=\"$v\" value=\"".$attr[value]."\">";
-                    $str.= "</div></div>";
-
-                    echo $str;
-                }
-        }
-
-        function printSelect($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                if(strlen($attr[choices_array_var]) > 0) {
+    function printSelect($v, $attr, $disp_type = "form") {
+        global $$v;
+        $_REQUEST[$v] = $$v;
+        if(strlen($attr[choices_array_var]) > 0) {
             $vchoices = $attr[choices_array_var];
         } else {
             $vchoices = $v . "_choices";
@@ -857,247 +637,95 @@ class Page {
         $choices = $$vchoices;
 
         if($disp_type == "form"){
-                        ?><select name="<?=$v?>"<?
-                if($attr[reloading]){
-                    ?> onChange="this.form.submit()"<?
-                }
-            ?>><?
-            //echo "<pre>" . var_dump($choices) . "</pre>";
-            foreach($choices as $c) {?>
-                <option value="<?=$c[value]?>" <?if($_REQUEST[$v] == $c[value]) echo "SELECTED";?>
-                ><?=$c[text];
-            }?>
-            </select><?
-                } else {
-                        foreach($choices as $c) {
+
+            //Build the open select tag
+            $reloading = "";
+            if($attr[reloading]){
+                $reloading.= " onChange=\"this.form.submit()\"";
+            }
+            $str = "<select name=\"$v\"$reloading>";
+
+            //Toss in the choices
+            foreach($choices as $c) {
+
+                $selected = ""
+                if($_REQUEST[$v] == $c[value])) $selected = " SELECTED";
+            
+                $str.= "<option value=\"".$c[value]."\"$selected>".$c[text]."</option>";
+            }
+
+            //Close the select tag
+            $str.= "</select>";
+           
+            if($attr[label]){
+                $label = $attr[label];
+            } else {
+                $label = $this->generateLabel($v);
+            }
+
+            $this->printComplexInput($v, $label, $str);
+
+        } else {
+            foreach($choices as $c) {
                 if($_REQUEST[$v] == $c[value]) {
                     if($args[lowercase] == true) echo strtolower($c[text]);
                     else echo $c[text];
                 }
             }            
-                }
-        }        
+        }
+    }        
 
-       function printRadio($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                if(strlen($attr[choices_array_var]) > 0) {
-                        $vchoices = $attr[choices_array_var];
-                } else {
-                        $vchoices = $v . "_choices";
-                }
+    function printRadio($v, $attr, $disp_type = "form") {
+        global $$v;
+        $_REQUEST[$v] = $$v;
+        if(strlen($attr[choices_array_var]) > 0) {
+            $vchoices = $attr[choices_array_var];
+        } else {
+            $vchoices = $v . "_choices";
+        }
 
-                global $$vchoices;
-                $choices = $$vchoices;
+        global $$vchoices;
+        $choices = $$vchoices;
 
-                if(!$_REQUEST[$v]){$_REQUEST[$v]=$choices[0][value];}
+        if(!$_REQUEST[$v]){$_REQUEST[$v]=$choices[0][value];}
 
         if($disp_type == "form"){
-                        foreach($choices as $c) {?>
-                                <input type="radio" name="<?=$v?>" value="<?=$c[value]?>" <?if($attr[reloading]){?>onClick="this.form.submit()"<?}?> <?if($_REQUEST[$v] == $c[value]) echo "CHECKED";?>
-                                ><?=$c[text]?><br/><?;
-                        }
-                } else {
-                        foreach($choices as $c) {
-                                if($_REQUEST[$v] == $c[value]) {
-                                        echo $c[text];
-                                }
-                        }
+            $str = "";
+            foreach($choices as $c) {
+                $reloading = "";
+                if($attr[reloading]) $reloading = " onClick=\"this.form.submit()\"";
+
+                $checked = "";
+                if($_REQUEST[$v] == $c[value]) $checked = " CHECKED";
+                
+                $str.= "<input type=\"radio\" name=\"$v\" value=\"".$c[value]."\"$reloading$checked>".$c[text];
+            }
+
+            if($attr[label]){
+                $label = $attr[label];
+            } else {
+                $label = $this->generateLabel($v);
+            }
+
+            $this->printComplexInput($v, $label, $str);
+        } else {
+            foreach($choices as $c) {
+                if($_REQUEST[$v] == $c[value]) {
+                    echo $c[text];
                 }
+            }
         }
+    }
 
     function isChecked($v){
         global $$v;
-                $_REQUEST[$v] = $$v;
-                $actual_var = $_REQUEST[$v];
-//var_dump($actual_var);
+        $_REQUEST[$v] = $$v;
+        $actual_var = $_REQUEST[$v];
+        
         if($actual_var=="Y"){return true;}        
         return false;
     }
 
-
-       function printCheckbox($v, $attr, $disp_type = "form", $key = -1) {
-                if($key != -1) {
-            global $$v;
-                    $_REQUEST[$v] = $$v;
-            $actual_var = $_REQUEST[$v][$key];
-            $actual_name = $v . "[" . $key . "]";
-        } else {
-            global $$v;
-            $_REQUEST[$v] = $$v;
-            $actual_var = $_REQUEST[$v];
-            $actual_name = $v;
-        }
-                
-        if($disp_type == "form"){//           "Y"                    <?=$actual_name? >
-                        ?><input type=checkbox value="Y" name="<?=$actual_name?>"
-            <?if ($actual_var == "Y") 
-                echo "CHECKED";?> > <?=$attr[on_text]?><?
-        } else {
-            if($actual_var = "Y") {
-                echo $attr[on_text];
-            } else {
-                echo $attr[off_text];
-            }
-                }
-        }
-
-       function printCheckboxArray($v, $attr, $disp_type = "form") {
-                global $$v;
-                $_REQUEST[$v] = $$v;
-                $vchoices = $v . "_choices";
-
-                global $$vchoices;
-                $choices = $$vchoices;
-
-        $str="";
-        
-                if($disp_type == "form"){
-                    $counter=0;
-            foreach($choices as $c) {
-                $attr[on_text] = $c[text];
-                $this->printCheckbox($v, $attr, "form", $c[value]);
-                ?><br/><?
-            }
-        } else {
-            $num_yes = 0;
-            foreach($choices as $c){
-                if($_REQUEST[$v][$c[value]] == "Y") {
-                    if($num_yes++ >= 1) {
-                        $str .= ", ";
-                    }
-                    $str .= $c[text];
-                }
-            }
-            if($str=="") {
-                $str = "None";
-            }
-            echo $str;
-        }
-        }
-
-
-    function printDateMonthYear($v, $attr, $disp_type="form") {
-        if($disp_type == "form") {
-            $this->printSelect($v."_month", array("get_choices_array_func"=>$attr[get_month_choices_array_func]));
-            $this->printSelect($v."_year", array("get_choices_array_func"=>$attr[get_year_choices_array_func],
-                        "get_choices_array_func_args"=>$attr[get_year_choices_array_func_args]));
-        } else {
-            $this->printSelect($v."_month", array("get_choices_array_func"=>$attr[get_month_choices_array_func]), "text");
-            echo " ";
-                        $this->printSelect($v."_year", array("get_choices_array_func"=>$attr[get_year_choices_array_func],
-                                                "get_choices_array_func_args"=>$attr[get_year_choices_array_func_args]), "text");
-        
-
-        }
-    }
-
-
-        function printCounter($v, $attr, $disp_type = "form") {
-
-                if($disp_type == "form"){
-                        ?><input type=hidden name="<?=$v?>" value="<?=htmlspecialchars($attr[value])?>"><?
-                } 
-        }
-
-    function getCounter($v){
-                foreach($this->vars as $var=>$attr){
-                        if($var==$v && $attr[type]="counter"){
-                                return $this->vars[$v][value];
-                        }
-                }
-                return false;
-        }
-
-    function setCounter($v, $value){
-        foreach($this->vars as $var=>$attr){
-            if($var==$v && $attr[type]="counter"){
-                $this->vars[$v][value]=$value;
-                return true;
-            }
-        }
-        return false;
-    }
-
-        function resetCounter($v){
-                foreach($this->vars as $var=>$attr){
-                        if($var==$v && $attr[type]="counter"){
-                                $this->vars[$v][value]=$attr[init];
-                                return $attr[init];
-                        }
-                }
-                return false;
-        }
-
-    function registerSegment($segment, $n){
-        if(!is_array($segment)){$segment = NULL;}
-    
-        //hidden variable which will retain fidelity of the segment ids
-                $this->register("testid".$n, "hidden", array("use_post"=>1, "default_val"=>$segment['id']));
-
-                //textbox for user-defined test name
-                $this->register("testname".$n, "textbox", array("use_post"=>1, "box_size"=>25, "default_val"=>$segment['name']));
-
-                //dropdown for type of test
-                $this->register("testtype".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getTestTypeChoices",
-                                                        "get_choices_array_func_args"=>0, "reloading"=>1,
-                                                                "default_val"=>$segment['test_type']));
-
-                //dropdown for call medium (SIP, DAHDI, etc)  Choices set in choices class
-                $this->register("technology".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getTechnologyChoices",
-                                                        "get_choices_array_func_args"=>0, "reloading"=>1,
-                                                                "default_val"=>$segment['channel_type']));
-                //dropdown for channel number
-                $this->register("channel".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getAvailableChannels",
-                                                        "get_choices_array_func_args"=>array($this->getVar("technology".$n), Session::userid()),
-                                                                "default_val"=>$segment['channel']));
-                //textbox for number of calls
-                $this->register("numcalls".$n, "textbox", array("use_post"=>1, "box_size"=>5, "default_val"=>1,
-                                                                "default_val"=>$segment['number_of_calls']));
-
-                //textbox for phone number
-                $this->register("phonenumber".$n, "textbox", array("use_post"=>1, "box_size"=>15,
-                                                                "default_val"=>$segment['phone_number']));
-
-                //textbox for callerid
-                $this->register("callerid".$n, "textbox", array("use_post"=>1, "box_size"=>15,
-                                                                "default_val"=>$segment['callerid']));
-
-                //textbox for pause between calls (singular, or range), (sec)
-                $this->register("pausetime".$n, "textbox", array("use_post"=>1, "box_size"=>15,
-                                                                "default_val"=>$segment['call_rate']));
-
-
-                //dropdown for directory holding wav files
-                $this->register("wavdir".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getWavDirectoryChoices",
-                                                        "get_choices_array_func_args"=>array($this->getVar("testtype".$n)), "reloading"=>1,
-                                                        "default_val"=>$segment['wav_dir']));
-
-                //dropdown for specific files inside wav file directory
-                $this->register("wavfile".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getWavFileChoices",
-                                                        "get_choices_array_func_args"=>array($this->getVar("testtype".$n), $this->getVar("wavdir".$n)),
-                                                        "default_val"=>$segment['wav_file']));
-
-         //drop-down for DTMF
-                $this->register("metadata_type".$n, "select", array("use_post"=>1, "get_choices_array_func"=>"getDTMFTestChoices",
-                                                                "get_choices_array_func_args"=>0, "default_val"=>$segment['metadata_type'],
-                                                                "reloading"=>1));
-                //textbox for metadata
-                $this->register("metadata".$n, "textbox", array("use_post"=>1, "box_size"=>25, "default_val"=>$segment['metadata']));
-
-                //dtmf stats
-                $this->register("dtmf_tone_on".$n, "textbox", array("use_post"=>1, "box_size"=>10, "default_val"=>$segment['dtmf_tone_on']));
-                $this->register("dtmf_tone_off".$n, "textbox", array("use_post"=>1, "box_size"=>10, "default_val"=>$segment['dtmf_tone_off']));
-                $this->register("dtmf_amplitude".$n, "textbox", array("use_post"=>1, "box_size"=>10, "default_val"=>$segment['dtmf_amplitude']));
-                $this->register("dtmf_freq_err".$n, "textbox", array("use_post"=>1, "box_size"=>10, "default_val"=>$segment['dtmf_freq_error']));
-                $this->register("dtmf_twist".$n, "textbox", array("use_post"=>1, "box_size"=>10, "default_val"=>$segment['dtmf_twist']));
-
-                //textbox for start delay (sec)
-                $this->register("startdelay".$n, "textbox", array("use_post"=>1, "box_size"=>25, "default_val"=>$segment['start_delay']));
-
-                //textarea for comments
-                $this->register("comments".$n, "textarea", array("use_post"=>1, "cols"=>1, "rows"=>8, "default_val"=>$segment['comments']));
-    }
 }
 
 ?>
