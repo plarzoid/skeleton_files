@@ -6,61 +6,60 @@ class Check
 {
 
 
-    function no_commas($str) {
+    public static function no_commas($str) {
         return preg_replace("/,/", "", $str);
     }
 
-    function notInt($v) {
-        if (!preg_match("/^[0-9]+$/", $v)) {
-            return true;
-        }
+    public static function notInt($v) {
+        if (preg_match("/^[\-]?[0-9]+$/", $v)) {return false;}
+        return true;
+    }
+
+    public static function notFloat($v){
+        if(preg_match("~^[0-9.]+$~", $v)) return false;
+        return true;
+    }
+
+    public static function notString($str) {
+        return Check::isNull($str);
+    }
+
+    public static function notBool($b) {
+        if(preg_match("~^[01]$~", $b)) return false;
+        if(($b == true) || ($b == false)) return false;
+        if(!strcmp(strtolower($b), "true") || !strcmp(strtolower($b), "false")) return false;
+        return true;
+    }
+
+    public static function isNull($v){
+        if($v === null) return true;
+        if(empty($v) && !is_numeric($v) && ($v !== false)) return true;
+        if(!strcmp($v, "null")) return true;
         return false;
     }
 
-    function notFloat($v){
-        if(preg_match("~^[0-9.]+$~", $v)) return true;
-        return false;
-    }
-
-    function notString($str) {
-        return isNull($str);
-    }
-
-    function notBool($b) {
-        if(preg_match("~^[01]$~", $b)) return true;
-        if(($b == true) || ($b == false)) return true;
-        if(!strcmp(strtolower($b), "true") || !strcmp(strtolower($b), "false")) return true;
-        return false;
-    }
-
-    function isNull($v){
-        if($v == null) return true;
-        if(empty($v) && !is_numeric($v)) return true;
-        return false;
-    }
-
-    function isInt($v) {
+    public static function isInt($v) {
         if (preg_match("/^[0-9]+$/", $v)) return true;
         return false;
     }
 
-    function isDate($d) {
+    public static function isDate($d) {
         if (!preg_match("/^[0-9]{4}-[01][0-9]-[03][0-9]$/", $d)) return false;
         return true;
     }
 
-    function strip_slashes($s) {
+    public static function strip_slashes($s) {
         return stripslashes($s);
     }
 
-    function formatTimestamp($t) {
+    public static function formatTimestamp($t) {
         $db = new Query();
         $db->execute("SELECT DATE_FORMAT('$t', '%M %D, %Y') as date");
         $db->get();
         return $db->date;
     }
 
-    function arrayKeysFormat($keys, $arr=false) {
+    public static function arrayKeysFormat($keys, $arr=false) {
         foreach($keys as $k) {
             if (is_array($arr) && !array_key_exists($k, $arr)) {
                 return false;
@@ -69,7 +68,7 @@ class Check
         return true;
     }
 
-    function dbstr2Array($str) {
+    public static function dbstr2Array($str) {
         $a1 = split(";;;", $str);
         $arr = array();
         foreach($a1 as $a) {
@@ -79,7 +78,7 @@ class Check
         return $arr;
     }
 
-    function array2Dbstr($arr) {
+    public static function array2Dbstr($arr) {
         $flag = true;
         if (is_array($arr)) {
             foreach ($arr as $key => $val) {
@@ -104,26 +103,26 @@ class Check
      * sending to user                                                                                                                             *
      *********************************************************************************/
 
-    function validHeight($val) {
+    public static function validHeight($val) {
         $val = stripslashes($val);
         if (strlen($val) < 1) return " Invalid: cannot be blank";
         if (!preg_match("/^[0-9]' *[0-9]+\"$/", $val)) return " Invalid: must be of the form F'I\", where F is feet and I is inches";
         return false;
     }
 
-    function validPositiveInt($val) {
+    public static function validPositiveInt($val) {
         if (strlen($val) < 1) return " Invalid: cannot be blank";
         if (!preg_match("/^[0-9]+$/", $val)) return " Invalid: must be a positive integer";
         return false;
     }
 
-    function validPictureFile($file_array, $can_be_blank = false) {
+    public static function validPictureFile($file_array, $can_be_blank = false) {
         $valid_extensions = array("png", "jpg", "gif", "jpeg");
         if ($can_be_blank && (!is_array($file_array) || strlen($file_array[name]) < 1)) { return false; }
         return validUploadedFile($file_array, $valid_extensions);
     }
 
-    function validUploadedFile($file_array, $ext_possibilities = array("txt", "jpg", "gif", "pdf", "jpeg", "ppt", "doc", "tar.gz", "tgz", "tar.bz2", "bz2")) {
+    public static function validUploadedFile($file_array, $ext_possibilities = array("txt", "jpg", "gif", "pdf", "jpeg", "ppt", "doc", "tar.gz", "tgz", "tar.bz2", "bz2")) {
         if (!is_array($file_array) || strlen($file_array[name]) < 1) { return false; } // allow empty files
         preg_match("/\.(.+)$/", $file_array[name], $matches);
         $ext = $matches[1];
@@ -142,21 +141,21 @@ class Check
     }
 
 
-    function validEmail($e) {
+    public static function validEmail($e) {
         if (!preg_match("/.+@.+\..+/", $e)) {
             return " Invalid: must be of the format x@x.x";
         }
         return false;
     }
 
-    function validCity($c) {
+    public static function validCity($c) {
         if (trim($c) == "") {
             return "Invalid city: city was blank";
         }
         return false;
     }
 
-    function validZip($z) {
+    public static function validZip($z) {
         if (     !preg_match("/^[0-9]{5}$/", $z)
                 && !preg_match("/^[0-9]{5}-[0-9]{4}/", $z)) {
             return "Invalid Zip: must be of the format 99999 or 99999-9999";
@@ -164,11 +163,11 @@ class Check
         return false;
     }
 
-    function validFax($f) {
+    public static function validFax($f) {
         return false;
     }
 
-    function validUsername($username) {
+    public static function validUsername($username) {
         if (strlen($username) < 3) {
             return "Invalid Username: username must be at least 3 characters long";
         }
@@ -190,7 +189,7 @@ class Check
         return false;
     }
 
-    function validPassword($p) {
+    public static function validPassword($p) {
         if (strlen($p) < 8) {
             return "Invalid Password: password must be at least 8 characters long";
         }
@@ -200,35 +199,35 @@ class Check
         return false;
     }
 
-/*    function validAuthLevel($a) {
+/*    public static function validAuthLevel($a) {
         if ($a != "ADMIN" && $a != "SITE" && $a != "ADVISORY" && $a != "PUBLIC" && $a != "ALUMNI") {
             return "Invalid Authentication Level: internal error";
         }
         return false;
     } */
 
-    function validFirstname($n) {
+    public static function validFirstname($n) {
         if (preg_match("/[^a-zA-Z -]/", $n)) {
             return "Invalid First Name: can only contain letters, spaces, or hyphens";
         }
         return false;
     }
 
-    function validLastname($n) {
+    public static function validLastname($n) {
         if (preg_match("/[^a-zA-Z -]/", $n)) {
             return "Invalid Last Name: can only contain letters, spaces, or hyphens";
         }
         return false;
     }
 
-    function validInt($i) {
+    public static function validInt($i) {
         if (!preg_match("/^[0-9]+$/", $i)) {
             return " Invalid: Must Be An Integer";
         }
         return false;
     }
 
-    function validFloat($f) {
+    public static function validFloat($f) {
         if (trim($f) == "") {
             return " Invalid: You Must Enter a Number";
         }
@@ -238,7 +237,7 @@ class Check
         return false;
     }
 
-    function validLengthText($s, $maxsize, $blank=false) {
+    public static function validLengthText($s, $maxsize, $blank=false) {
         if (strlen(trim($s)) > $maxsize)
             return " Invalid: must be less than $maxsize characters";
         if (strlen(trim($s)) < 1) {
@@ -249,7 +248,7 @@ class Check
         return false;
     }
 
-    function validShortText($s, $blank=false) {
+    public static function validShortText($s, $blank=false) {
         if (strlen(trim($s)) > 256)
             return " Invalid: must be less than 256 characters";
         if (strlen(trim($s)) < 1) {
@@ -260,7 +259,7 @@ class Check
         return false;
     }
 
-    function validLongText($s, $can_be_blank = false) {
+    public static function validLongText($s, $can_be_blank = false) {
         if (strlen($s) > 65535)
             return " Invalid: must be less than 65,535 characters";
         if (!$can_be_blank && strlen($s) < 1)
@@ -268,21 +267,21 @@ class Check
         return false;
     }
 
-    function notEmpty($val) {
+    public static function notEmpty($val) {
         if (!isset($val) || preg_match("/^\s*$/", $val))
             return "Text is empty";
         else return false;
     }
 
-    function validWebsite($w) {
+    public static function validWebsite($w) {
         return Check::validShortText($w);
     }
 
-    function validAddress($a) {
+    public static function validAddress($a) {
         return Check::validLongText($a);
     }
 
-    function validPhone($p) {
+    public static function validPhone($p) {
         // FOREIGN PHONE NUMBERS?? EXTENSIONS??
         if (strlen($p) < 10) {
             return " Invalid: must provide at least 10 digits";
@@ -301,7 +300,7 @@ class Check
     }
 
 
-    function validDateMonthYear($month, $year) {
+    public static function validDateMonthYear($month, $year) {
         if (Check::notInt($month) || Check::notInt($year)) {
             return " Invalid: Internal Error";
         }
@@ -314,7 +313,7 @@ class Check
         }
     }
 
-    function validId($id, $objname_for_idexists, $extra_args = array()) {
+    public static function validId($id, $objname_for_idexists, $extra_args = array()) {
         $o = new $objname_for_idexists();
         if (count($extra_args) == 0 && $o->idExists($id)) {
             return false;
@@ -329,7 +328,7 @@ class Check
         }
     }
 
-    function validIdZero($id, $objname_for_idexists, $extra_args = array()) {
+    public static function validIdZero($id, $objname_for_idexists, $extra_args = array()) {
         $o = new $objname_for_idexists();
         if (count($extra_args) == 0 && ($id == 0 || $o->idExists($id, $extra_args[0]))) {
             return false;
@@ -342,7 +341,7 @@ class Check
         }
     }
 
-    function validRadio($v, $choices_func, $choices_func_args = array()) {
+    public static function validRadio($v, $choices_func, $choices_func_args = array()) {
         $ch = new Choices();
         $a = $choices_func_args;
         if (!is_array($a)) {
@@ -366,7 +365,7 @@ class Check
         return false;
     }
 
-    function validSelect($v, $choices_func, $choices_func_args = array()) {
+    public static function validSelect($v, $choices_func, $choices_func_args = array()) {
         $ch = new Choices();
         $a = $choices_func_args;
         if (!is_array($a)) {
@@ -394,7 +393,7 @@ class Check
         return false;
     }
 
-    function formatDate($date, $type=false, $format=false) {
+    public static function formatDate($date, $type=false, $format=false) {
         if ($type == 1) { 
             // MSSQL date format MON DD YYYY HH:MMAM
                                     //    Month            Day            Year        Time                     AM/PM

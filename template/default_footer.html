@@ -1,0 +1,22 @@
+<footer id="main_footer">
+    <nav id="footer_nav">
+        <ul>
+            <li><a href="home.php">Home</a></li>
+	    <?if(Session::isLoggedIn()){?>
+		<li>Logged in as: <?=Session::getUsername()?></li>
+		<li><a href="login.php?action=logout">Log Out</a></li>
+	    <?} else {?>
+                <li>Not logged in!</li>
+                <li><a href="login.php">Log In</a></li>
+            <?}?>
+        </ul>
+    </nav>
+    <section>
+        <div class="simple">
+            Software &copy; Plarzoid Productions, LLC<br>
+        </div>
+    </section>
+</footer>
+</div>
+</body>
+</html>

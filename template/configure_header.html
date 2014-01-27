@@ -1,0 +1,14 @@
+<form method="<?=$form_method?>" action="<?=$form_action?>">
+<section id="main_section">
+    <header>
+        <hgroup>
+            <h1><? echo $title?></h1>
+            <? if(!empty($error)){?><h3 class="warning"><?=$error?></h3><?}?>
+        </hgroup>
+    </header>
+    <section id="inputs_section">
+        <? foreach($inputs as $i){?>
+            <? echo $page->displayVar($i)?>
+        <?}?>
+    </section>
+    <hr>

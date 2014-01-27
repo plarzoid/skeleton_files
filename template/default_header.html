@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-US" xml:lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <?=$meta?>
+    <title>Iron Arena</title>
+    <link rel="stylesheet"  href="<?=$this->getWebRoot()?>styles/style.css">
+</head>
+<body>
+<div id="wrapper">
+    <header id="main_header">
+        <hgroup>
+            <h1>MAIN TITLE</h1>
+            <h2 class="warning">[BETA TESTING BUILD]</h2>
+        </hgroup>
+    </header>
+    <nav id="header_nav">
+        <ul>
+        <li><a href="home.php">Home</a></li>
+        <?if(Session::isLoggedIn()){?>
+            <li>Logged in as: <?=Session::getUsername()?></li>
+            <li><a href="login.php?action=logout">Log Out</a></li>
+        <?} else {?>
+            <li>Not logged in!</li>
+            <li><a href="login.php">Log In</a></li>
+        <?}?>
+        </ul>
+    </nav>

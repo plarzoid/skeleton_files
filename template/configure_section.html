@@ -1,0 +1,19 @@
+    <header>
+        <h3><? echo $subtitle?></h3>
+    </header>
+    <? foreach($inputs as $i){?>
+        <? echo $page->displayVar($i)?>
+    <?}?>
+    <hr>
+    <header>
+        <h3><? echo $subtitle2?></h3>
+    </header>
+    <form method="<?=$form_method?>" action="<?=$form_action?>">
+    <? foreach($inputs2 as $i){?>
+        <? echo $page->displayVar($i)?>
+    <?}?>
+    </form>
+    <? if($result){?>
+        <h2 class="success">Success!</h2>
+        <section>Refresh page to see changes take effect</section>
+    <?}?>
